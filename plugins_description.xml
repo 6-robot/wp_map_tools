@@ -1,0 +1,9 @@
+<library path="wp_map_plugins">
+  <class name="wp_map_tools/AddWaypointTool"
+         type="wp_map_tools::AddWaypointTool"
+         base_class_type="rviz_common::Tool">
+    <description>
+      Tool for adding waypoints on the ground plane in rviz.
+    </description>
+  </class>
+</library>
