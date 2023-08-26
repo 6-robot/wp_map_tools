@@ -5,7 +5,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <rclcpp/rclcpp.hpp>
-#include <visualization_msgs/msg/marker.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 #include <visualization_msgs/msg/interactive_marker.hpp>
 #include <visualization_msgs/msg/interactive_marker_control.hpp>
 #include <interactive_markers/interactive_marker_server.hpp>
@@ -16,6 +16,7 @@
 std::shared_ptr<rclcpp::Node> node;
 static std::vector <wp_map_tools::msg::Waypoint> arWaypoint;
 static std::vector <wp_map_tools::msg::Waypoint> arCharger;
+static rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub;
 static visualization_msgs::msg::Marker text_marker;
 static interactive_markers::InteractiveMarkerServer* pWaypointServer = NULL;
 
@@ -161,12 +162,12 @@ void processWaypointFeedback(
   const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr & feedback,
   rclcpp::Logger logger)
 {
-  // std::ostringstream oss;
-  // oss << feedback->marker_name << " is now at " << feedback->pose.position.x << ", " <<
-  //   feedback->pose.position.y << ", " << feedback->pose.position.z;
-  // RCLCPP_WARN(logger, "%s", oss.str().c_str());
+    // std::ostringstream oss;
+    // oss << feedback->marker_name << " is now at " << feedback->pose.position.x << ", " <<
+    //   feedback->pose.position.y << ", " << feedback->pose.position.z;
+    // RCLCPP_WARN(logger, "%s", oss.str().c_str());
 
-  int nNumWP = arWaypoint.size();
+    int nNumWP = arWaypoint.size();
     for(int i=0; i<nNumWP ; i++ )
     {
         if(feedback->marker_name == arWaypoint[i].name)
@@ -182,18 +183,16 @@ void NewWaypointInterMarker(interactive_markers::InteractiveMarkerServer* inServ
 {
     visualization_msgs::msg::InteractiveMarker wp_itr_marker;
     visualization_msgs::msg::InteractiveMarkerControl wp_dis_ctrl;
-    visualization_msgs::msg::Marker wp_dis_marker;
     visualization_msgs::msg::InteractiveMarkerControl move_control;
     wp_itr_marker.header.stamp=node->get_clock()->now();
     wp_itr_marker.name = inName;
     wp_itr_marker.description = inName;
     wp_itr_marker.pose = InPose;
-
-    // 显示外形
     wp_itr_marker.header.frame_id = "map";
     wp_itr_marker.header.stamp=node->get_clock()->now();
 
-    // wp_dis_marker.ns = "waypoint_markers";
+    // 显示3D模型
+    visualization_msgs::msg::Marker wp_dis_marker;
     wp_dis_marker.action = visualization_msgs::msg::Marker::ADD;
     wp_dis_marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
     wp_dis_marker.mesh_resource = "package://wp_map_tools/meshes/waypoint.dae";
@@ -204,8 +203,20 @@ void NewWaypointInterMarker(interactive_markers::InteractiveMarkerServer* inServ
     wp_dis_marker.color.g = 0.0;
     wp_dis_marker.color.b = 1.0;
     wp_dis_marker.color.a = 1.0;
-
     wp_dis_ctrl.markers.push_back( wp_dis_marker );
+
+    // 显示航点名称文字
+    visualization_msgs::msg::Marker text_marker;
+    text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+    text_marker.scale.z = 0.3;
+    text_marker.color.r = 1;
+    text_marker.color.g = 1;
+    text_marker.color.b = 0;
+    text_marker.color.a = 1.0;
+    text_marker.text = inName;
+    text_marker.pose.position.z = 0.8;
+    wp_dis_ctrl.markers.push_back( text_marker );
+    
     wp_dis_ctrl.always_visible = true;
     wp_itr_marker.controls.push_back( wp_dis_ctrl );
 
@@ -294,7 +305,6 @@ void AddWayPointCallback(const wp_map_tools::msg::Waypoint::ConstPtr& wp)
     }
 }
 
-
 int main(int argc, char ** argv)
 {
     rclcpp::init(argc, argv);
@@ -318,6 +328,7 @@ int main(int argc, char ** argv)
     //服务和话题初始化
     auto add_waypoint_sub = node->create_subscription<wp_map_tools::msg::Waypoint>("waterplus/add_waypoint",10,AddWayPointCallback);
     auto service = node->create_service<wp_map_tools::srv::SaveWaypoints>("waterplus/save_waypoints", saveWaypoints);
+    marker_pub = node->create_publisher<visualization_msgs::msg::Marker>("text_marker", 100);
 
     RCLCPP_INFO(node->get_logger(), "wp_edit_node 初始化完毕");
 
