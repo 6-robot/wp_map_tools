@@ -5,7 +5,7 @@
 1. 安装ROS(Humble)
 2. 获取源码:
 ```
-cd ~/catkin_ws/src/
+cd ~/ros2_ws/src/
 git clone https://github.com/6-robot/wp_map_tools.git
 ```
 3. 安装依赖项(根据ROS版本选择其中一个):
