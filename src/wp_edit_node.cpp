@@ -12,12 +12,11 @@
 #include <interactive_markers/menu_handler.hpp>
 #include "wp_map_tools/msg/waypoint.hpp"
 #include "wp_map_tools/srv/save_waypoints.hpp"
+#include "wp_map_tools/srv/get_waypoint_by_name.hpp"
 
-std::shared_ptr<rclcpp::Node> node;
+static std::shared_ptr<rclcpp::Node> node;
 static std::vector <wp_map_tools::msg::Waypoint> arWaypoint;
 static std::vector <wp_map_tools::msg::Waypoint> arCharger;
-static rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub;
-static visualization_msgs::msg::Marker text_marker;
 static interactive_markers::InteractiveMarkerServer* pWaypointServer = NULL;
 
 static interactive_markers::MenuHandler* pMenuWaypoint = NULL;
@@ -89,6 +88,34 @@ bool saveWaypoints(const std::shared_ptr<wp_map_tools::srv::SaveWaypoints::Reque
     return true;
 }
 
+bool getWaypointByName(const std::shared_ptr<wp_map_tools::srv::GetWaypointByName::Request> req,
+                       std::shared_ptr<wp_map_tools::srv::GetWaypointByName::Response> res)
+{
+    std::string reqName = req->name;
+    int nNumWP = arWaypoint.size();
+    bool bResultGetWP = false;
+    for (int i = 0; i < nNumWP; i++)
+    {
+        std::size_t found = arWaypoint[i].name.find(reqName);
+        if (found != std::string::npos)
+        {
+            res->name = arWaypoint[i].name;
+            res->pose = arWaypoint[i].pose;
+            bResultGetWP = true;
+            break;
+        }
+    }
+    if (bResultGetWP == true)
+    {
+        RCLCPP_INFO(node->get_logger(), "Get_wp_name: name = %s", res->name.c_str());
+        return true;
+    }
+    else
+    {
+        RCLCPP_INFO(node->get_logger(), "Get_wp_name: failed! There is no waypoint name %s", reqName.c_str());
+        return false;
+    }
+}
 
 bool LoadWaypointsFromFile(std::string inFilename)
 {
@@ -328,7 +355,7 @@ int main(int argc, char ** argv)
     //服务和话题初始化
     auto add_waypoint_sub = node->create_subscription<wp_map_tools::msg::Waypoint>("waterplus/add_waypoint",10,AddWayPointCallback);
     auto service = node->create_service<wp_map_tools::srv::SaveWaypoints>("waterplus/save_waypoints", saveWaypoints);
-    marker_pub = node->create_publisher<visualization_msgs::msg::Marker>("text_marker", 100);
+    auto srvGetWPName = node->create_service<wp_map_tools::srv::GetWaypointByName>("waterplus/get_waypoint_name",std::bind(&getWaypointByName, std::placeholders::_1, std::placeholders::_2));
 
     RCLCPP_INFO(node->get_logger(), "wp_edit_node 初始化完毕");
 

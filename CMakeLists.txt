@@ -8,9 +8,11 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(interactive_markers REQUIRED)
-find_package(nav_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(yaml-cpp REQUIRED)
@@ -40,12 +42,14 @@ ament_export_dependencies(
   "tf2_ros"
   "visualization_msgs"
   "geometry_msgs"
+  "std_msgs"
   "yaml-cpp")
 
 find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Waypoint.msg" 
   "srv/SaveWaypoints.srv"
+  "srv/GetWaypointByName.srv"
   DEPENDENCIES 
   "geometry_msgs"
 )
@@ -142,8 +146,16 @@ ament_target_dependencies(wp_edit_node
 target_link_libraries(wp_edit_node "yaml-cpp" "${cpp_typesupport_target}")
 
 add_executable(wp_saver src/wp_saver.cpp)
-ament_target_dependencies(wp_saver rclcpp )
+ament_target_dependencies(wp_saver "rclcpp" )
 target_link_libraries(wp_saver "${cpp_typesupport_target}")
+
+add_executable(wp_navi_server src/wp_navi_server.cpp)
+ament_target_dependencies(wp_navi_server "rclcpp" "std_msgs" "rclcpp_action" "nav2_msgs" "tf2_ros")
+target_link_libraries(wp_navi_server "${cpp_typesupport_target}")
+
+add_executable(demo_navi_waypoint src/demo_navi_waypoint.cpp)
+ament_target_dependencies(demo_navi_waypoint "rclcpp" "std_msgs" )
+target_link_libraries(demo_navi_waypoint "${cpp_typesupport_target}")
 
 # 安装节点
 install(DIRECTORY launch meshes rviz msg srv icons
@@ -153,6 +165,8 @@ install(
   TARGETS
     wp_edit_node 
     wp_saver
+    wp_navi_server
+    demo_navi_waypoint
   DESTINATION
     lib/${PROJECT_NAME}
 )
