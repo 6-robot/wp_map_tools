@@ -96,8 +96,7 @@ bool getWaypointByName(const std::shared_ptr<wp_map_tools::srv::GetWaypointByNam
     bool bResultGetWP = false;
     for (int i = 0; i < nNumWP; i++)
     {
-        std::size_t found = arWaypoint[i].name.find(reqName);
-        if (found != std::string::npos)
+        if (arWaypoint[i].name == reqName)
         {
             res->name = arWaypoint[i].name;
             res->pose = arWaypoint[i].pose;
@@ -236,9 +235,9 @@ void NewWaypointInterMarker(interactive_markers::InteractiveMarkerServer* inServ
     visualization_msgs::msg::Marker text_marker;
     text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     text_marker.scale.z = 0.3;
-    text_marker.color.r = 1;
-    text_marker.color.g = 1;
-    text_marker.color.b = 0;
+    text_marker.color.r = 0;
+    text_marker.color.g = 0;
+    text_marker.color.b = 1;
     text_marker.color.a = 1.0;
     text_marker.text = inName;
     text_marker.pose.position.z = 0.8;
