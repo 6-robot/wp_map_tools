@@ -27,9 +27,33 @@ rclcpp_action::Client<NavigateToPose>::SharedPtr navigation_client_;
 
 void NaviWaypointCB(const std_msgs::msg::String::SharedPtr msg)
 {
+    RCLCPP_INFO(node->get_logger(), "[NaviWaypointCB] 目标航点= %s",msg->data.c_str());
     waypoint_name = msg->data;
     
     bNewCmd = true;
+}
+
+void resultCallback(const GoalHandleNavigateToPose::WrappedResult & result)
+{
+    switch (result.code) {
+        case rclcpp_action::ResultCode::SUCCEEDED:
+        RCLCPP_INFO(node->get_logger(), "Success!!!");
+        result_msg.data = "navi done";
+        break;
+        case rclcpp_action::ResultCode::ABORTED:
+        RCLCPP_INFO(node->get_logger(), "Goal was aborted");
+        result_msg.data = "navi aborted";
+        break;
+        case rclcpp_action::ResultCode::CANCELED:
+        RCLCPP_INFO(node->get_logger(), "Goal was canceled");
+        result_msg.data = "navi canceled";
+        break;
+        default:
+        RCLCPP_INFO(node->get_logger(), "Unknown result code");
+        result_msg.data = "navi Unknown result";
+        break;
+    }
+    result_pub->publish(result_msg);
 }
 
 int main(int argc, char** argv)
@@ -101,7 +125,6 @@ int main(int argc, char** argv)
                     break;
                 RCLCPP_INFO(node->get_logger(), "Waiting for the move_base action server to come up");
             }
-
            
             // Create the navigation goal request
             auto goal_msg = NavigateToPose::Goal();
@@ -112,21 +135,22 @@ int main(int argc, char** argv)
             
             // Send the navigation goal request
             auto send_goal_options = rclcpp_action::Client<NavigateToPose>::SendGoalOptions();
+            send_goal_options.result_callback = std::bind(&resultCallback, std::placeholders::_1);
             auto goal_handle_future = navigation_client_->async_send_goal(goal_msg, send_goal_options);
 
             // Wait for the goal to complete
-            if (rclcpp::spin_until_future_complete(node->get_node_base_interface(), goal_handle_future) == rclcpp::FutureReturnCode::SUCCESS)
-            {
-                RCLCPP_INFO(node->get_logger(), "Arrived at WayPoint !");
-                result_msg.data = "done";
-            }
-            else
-            {
-                RCLCPP_WARN(node->get_logger(), "Failed to get to WayPoint ...");
-                result_msg.data = "failure";
-            }
+            // if (rclcpp::spin_until_future_complete(node->get_node_base_interface(), goal_handle_future) == rclcpp::FutureReturnCode::SUCCESS)
+            // {
+            //     RCLCPP_INFO(node->get_logger(), "Arrived at WayPoint !");
+            //     result_msg.data = "navi done";
+            // }
+            // else
+            // {
+            //     RCLCPP_WARN(node->get_logger(), "Failed to get to WayPoint ...");
+            //     result_msg.data = "navi failure";
+            // }
 
-            result_pub->publish(result_msg);
+            // result_pub->publish(result_msg);
             bNewCmd = false;
         }
 
