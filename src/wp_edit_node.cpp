@@ -48,7 +48,7 @@ bool SaveWaypointsToFile(std::string inFilename)
 
     // 1 航点坐标
     int nNumWP = arWaypoint.size();
-    content["waypoints_num"] = nNumWP;
+    content["Waypoints_Num"] = nNumWP;
     for(int i=0; i<nNumWP; i++)
     {
       YAML::Node node;
@@ -61,7 +61,8 @@ bool SaveWaypointsToFile(std::string inFilename)
       node["Ori_y"] = Flt2Str(arWaypoint[i].pose.orientation.y);
       node["Ori_z"] = Flt2Str(arWaypoint[i].pose.orientation.z);
       node["Ori_w"] = Flt2Str(arWaypoint[i].pose.orientation.w);
-      content[i+1] = node;
+      std::string waypointKey = "Waypoint_" + std::to_string(i+1);
+      content[waypointKey] = node;
     }
 
     // 2 充电桩坐标（未实现）
@@ -144,15 +145,14 @@ bool LoadWaypointsFromFile(std::string inFilename)
     }
 
     // 提取 waypoints_num
-    int numWaypoints = yamlNode["waypoints_num"].as<int>();
+    int numWaypoints = yamlNode["Waypoints_Num"].as<int>();
 
     arWaypoint.clear();
     wp_map_tools::msg::Waypoint newWayPoint;
     // 提取每个 waypoint 的数据
-    for (int i = 1; i <= numWaypoints; ++i) 
+    for (int i = 0; i < numWaypoints; ++i) 
     {
-        std::string waypointKey = std::to_string(i);
-
+        std::string waypointKey = "Waypoint_" + std::to_string(i+1);
         if(yamlNode[waypointKey]["Type"].as<std::string>() == "Waypoint")
         {
             newWayPoint.name = yamlNode[waypointKey]["Name"].as<std::string>();
