@@ -31,7 +31,7 @@ def generate_launch_description():
     # 声明launch文件参数，用于指定map.yaml文件路径
     map_file = os.path.join(
         get_package_share_directory('wpr_simulation2'),
-        'map',
+        'maps',
         'map.yaml'
     )
 
