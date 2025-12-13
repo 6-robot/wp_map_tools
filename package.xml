@@ -5,7 +5,7 @@
   <version>1.0.0</version>
   <description>a map tools for robots of 6-robot</description>
   <url type="website">http://www.6-robot.com</url>
-  <maintainer email="zhangwanjie@126.com">robot</maintainer>
+  <maintainer email="zhangwanjie@6-robot.com">robot</maintainer>
   <license>BSD-3</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
